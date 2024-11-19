@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fase5</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-image: url(fundo.png);
+            margin: 0;
+        }
+
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(20, 50px); /* 20 colunas de 50px */
+            grid-template-rows: repeat(20, 50px); /* 20 linhas de 50px */
+            gap: 2px;
+        }
+
+        .wall, .path, .player, .enemy, .button, .door {
+            width: 50px;
+            height: 50px;
+        }
+
+        .wall {
+            background-color: #333;
+        }
+
+        .path {
+            background-color: #ccc;
+        }
+
+        .player {
+            background-image: url(jogador.png);
+            background-size: cover; /* Ajusta a imagem para cobrir o quadrado */
+            background-position: center; /* Centraliza a imagem */
+        }
+
+        .enemy {
+            background-image: url(inimigo.png);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .button {
+            background-image: url(chave.png);
+            background-size: cover;
+            background-position: center;
+        }
+
+        .door {
+            background-image: url(porta.png);
+            background-size: cover;
+            background-position: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="maze" id="maze"></div>
+
+    <script>
+        let playerPosition = { x: 1, y: 1 };    // Coordenadas iniciais do player
+        let enemyPosition = { x: 17, y: 6 };    // Coordenadas iniciais do inimigo
+        let buttonActivated = false;            // Se o botão foi ativado
+
+        const mazeLayout = [
+            ['wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall'],
+            ['wall', 'player','wall', 'path', 'wall', 'path', 'wall', 'path', 'path', 'path', 'path', 'wall', 'path', 'path', 'wall', 'path', 'path', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'path', 'wall', 'path', 'wall', 'wall', 'wall', 'wall', 'path', 'path', 'wall', 'path', 'wall', 'path', 'wall', 'path', 'path', 'wall'],
+            ['wall', 'path', 'path', 'path', 'wall', 'path', 'path', 'path', 'path', 'wall', 'path', 'wall', 'path', 'path', 'wall', 'path', 'wall', 'wall', 'path', 'wall'],
+            ['wall', 'wall', 'wall', 'path', 'wall', 'path', 'wall', 'wall', 'path', 'wall', 'wall', 'wall', 'path', 'path', 'wall', 'path', 'path', 'path', 'path', 'wall'],
+            ['wall', 'path', 'path', 'path', 'wall', 'path', 'path', 'wall', 'path', 'path', 'path', 'path', 'path', 'wall', 'wall', 'path', 'wall', 'wall', 'button', 'wall'],
+            ['wall', 'path', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'wall', 'wall', 'path', 'wall', 'wall', 'wall', 'path', 'path', 'wall', 'enemy', 'path', 'wall'],
+            ['wall', 'path', 'wall', 'path', 'path', 'wall', 'path', 'wall', 'path', 'wall', 'path', 'wall', 'path', 'wall', 'wall', 'path', 'wall', 'wall', 'path', 'wall'],
+            ['wall', 'path', 'path', 'path', 'path', 'path', 'path', 'wall', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'wall'],
+            ['wall', 'path', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'path', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'wall', 'wall'],
+            ['wall', 'path', 'path', 'path', 'path', 'wall', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'path', 'path', 'wall', 'wall', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'wall', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'wall', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'path', 'wall', 'path', 'wall', 'wall'],
+            ['wall', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'path', 'wall', 'door', 'wall', 'wall'],
+            ['wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall', 'wall']
+        ];
+
+        const maze = document.getElementById("maze");
+
+        // Renderiza o labirinto com base no layout atualizado
+        function renderMaze() {
+            maze.innerHTML = '';
+            mazeLayout.forEach(row => {
+                row.forEach(cell => {
+                    const div = document.createElement("div");
+                    div.classList.add(cell);
+                    maze.appendChild(div);
+                });
+            });
+        }
+
+        // Função para mover o player
+        function movePlayer(dx, dy) {
+            const newX = playerPosition.x + dx;
+            const newY = playerPosition.y + dy;
+
+            if (mazeLayout[newY][newX] !== 'wall') {
+                if (mazeLayout[newY][newX] === 'button') {
+                    buttonActivated = true;
+                }
+
+                if (mazeLayout[newY][newX] === 'door' && buttonActivated) {
+                    alert("Parabéns, você ganhou o jogo");
+                    resetGame() //proximo arquivo
+                    return;
+                }
+
+                mazeLayout[playerPosition.y][playerPosition.x] = 'path';
+                playerPosition = { x: newX, y: newY };
+                mazeLayout[playerPosition.y][playerPosition.x] = 'player';
+
+                moveEnemy();
+                renderMaze();
+            }
+        }
+
+        // Função A* para encontrar o caminho mais curto
+        function findPath(start, goal) {
+            const openList = [start];
+            const cameFrom = {};
+            const costSoFar = {};
+            cameFrom[`${start.x},${start.y}`] = null;
+            costSoFar[`${start.x},${start.y}`] = 0;
+
+            while (openList.length > 0) {
+                openList.sort((a, b) => costSoFar[`${a.x},${a.y}`] + heuristic(a, goal) - (costSoFar[`${b.x},${b.y}`] + heuristic(b, goal)));
+                const current = openList.shift();
+
+                if (current.x === goal.x && current.y === goal.y) break;
+
+                getNeighbors(current).forEach(next => {
+                    const newCost = costSoFar[`${current.x},${current.y}`] + 1;
+                    const nextKey = `${next.x},${next.y}`;
+
+                    if (!(nextKey in costSoFar) || newCost < costSoFar[nextKey]) {
+                        costSoFar[nextKey] = newCost;
+                        cameFrom[nextKey] = current;
+                        openList.push(next);
+                    }
+                });
+            }
+
+            const path = [];
+            let current = goal;
+
+            while (current) {
+                path.push(current);
+                current = cameFrom[`${current.x},${current.y}`];
+            }
+
+            path.reverse();
+            return path[1] || start;
+        }
+
+        // Função heurística para estimar a distância entre dois pontos
+        function heuristic(a, b) {
+            return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        }
+
+        // Retorna os vizinhos válidos de uma posição
+        function getNeighbors(pos) {
+            const directions = [
+                { x: 1, y: 0 },
+                { x: -1, y: 0 },
+                { x: 0, y: 1 },
+                { x: 0, y: -1 }
+            ];
+
+            return directions.map(dir => ({
+                x: pos.x + dir.x,
+                y: pos.y + dir.y
+            })).filter(next => mazeLayout[next.y] && mazeLayout[next.y][next.x] && mazeLayout[next.y][next.x] !== 'wall');
+        }
+
+        // Função para mover o inimigo
+        function moveEnemy() {
+            const nextStep = findPath(enemyPosition, playerPosition);
+
+            mazeLayout[enemyPosition.y][enemyPosition.x] = 'path';
+            enemyPosition = nextStep;
+            mazeLayout[enemyPosition.y][enemyPosition.x] = 'enemy';
+
+            if (enemyPosition.x === playerPosition.x && enemyPosition.y === playerPosition.y) {
+                alert("O inimigo te pegou! Jogo reiniciado.");
+                resetGame();
+            }
+        }
+
+        // Função para resetar o jogo
+        function resetGame() {
+            playerPosition = { x: 1, y: 1 };
+            enemyPosition = { x: 17, y: 6 };
+            buttonActivated = false;
+            renderMaze();
+        }
+
+        // Controla o movimento do player com as teclas WASD
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'w') movePlayer(0, -1);
+            if (e.key === 's') movePlayer(0, 1);
+            if (e.key === 'a') movePlayer(-1, 0);
+            if (e.key === 'd') movePlayer(1, 0);
+        });
+
+        renderMaze();
+    </script>
+</body>
+</html>
